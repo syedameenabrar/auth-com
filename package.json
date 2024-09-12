@@ -1,6 +1,6 @@
 {
-  "name": "auth-curd-api",
-  "version": "1.0.7",
+  "name": "auth-curd-api-com-password",
+  "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
