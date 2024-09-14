@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
         accountType: {
             type: String,
             default: "user",
-            enum: ["user", "admin", "dealer"],
+            enum: ["user", "admin", "dealer", "employee"],
         },
         profilePicture: { type: String },
     },
@@ -25,4 +25,4 @@ const userSchema = new mongoose.Schema(
 
 userSchema.plugin(paginate);
 userSchema.plugin(aggregatePaginate);
-module.exports = mongoose.model("user", userSchema);
+module.exports = mongoose.model("users", userSchema);
