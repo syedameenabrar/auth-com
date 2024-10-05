@@ -27,7 +27,7 @@ module.exports.staffRegister = async (body) => {
         email: body.email,
         phoneNumber: body.phoneNumber,
         password: hashedPassword,
-        isstaff: true,
+        isStaff: true,
         phoneOTP: generateOTP(),
     };
     logger.info(payload);
