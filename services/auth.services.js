@@ -1,79 +1,95 @@
-const { logger, AppError, } = require("common-function-api")
-const userService = require("./user.services");
+const { logger, AppError, } = require("database-connection-function-com")
 const bcrypt = require("bcryptjs");
+
+// custom packages
+const userService = require("./user.services");
 const tokenService = require("../middlewares/token");
-const { v4: uuidv4 } = require("uuid");
+const { generateOTP, generateUniqueUsername } = require('../utils/utils');
+const sms = require('./sms/fast2sms');
 
-// register
-module.exports.register = async (body) => {
-    logger.info(`User registeration started`);
-    if (!body.email) {
-        throw new AppError(404, "Required Email", "Email Required");
-    }
+// user register
+module.exports.createRegister = async (body) => {
+    logger.info("creating user register");
     if (!body.phoneNumber) {
-        throw new AppError(404, "Required Phone Number", "Phone Number Required");
+        throw new AppError(404, "Required Parameters");
     }
-    //check email
-    const isEmailExist = await userService.findOneRecord({ email: body.email });
-    if (isEmailExist) throw new AppError(429, "Already Email Is Exists");
-    //check phoneNumber
-    const isPhoneExist = await userService.findOneRecord({
+    const isPhoneNumberExists = await userService.findOneRecord({
         phoneNumber: body.phoneNumber,
     });
-    if (isPhoneExist) throw new AppError(429, "Already phoneNumber Is Exists");
-    const password = bcrypt.hashSync(body.password, 10);
-    const uniqueUserName = `USER${uuidv4()
-        .toUpperCase()
-        .replace(/-/g, "")
-        .substring(0, 9)}`;
+    if (isPhoneNumberExists) {
+        const resentOtp = await userService.updateRecord(
+            { _id: isPhoneNumberExists.id },
+            { phoneOTP: generateOTP() }
+        );
+        await sms.smsOTPV2(resentOtp);
+        logger.info(resentOtp);
+        isPhoneNumberExists.phoneOTP = undefined;
+        return isPhoneNumberExists;
+    }
     const payload = {
-        username: uniqueUserName,
-        fullName: body.fullName,
-        email: body.email,
         phoneNumber: body.phoneNumber,
-        password: password,
-        accountType: body.accountType,
+        phoneOTP: generateOTP(),
+        username: generateUniqueUsername('USR'),
+        email: body.email
     };
+    logger.info(payload);
     const user = await userService.createRecord(payload);
-    const record = {
-        _id: user._id,
-        username: user.username,
-        fullName: user.fullName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        accountType: user.accountType,
-    };
-    return record;
+    await sms.smsOTPV2(user);
+    user.phoneOTP = undefined;
+    return user;
 };
 
-// login
-module.exports.login = async (body) => {
-    logger.info(`Login service started`);
-    if (!body.phoneNumber && !body.email) {
-        throw new AppError(400, "Email Or Username is Required");
+// userlogin with otp
+// 1 user
+module.exports.authLogin = async (body, res) => {
+    logger.info("login service Starting");
+    if (!body.phoneNumber || !body.phoneOTP) {
+        throw new AppError(404, "Required Parameters");
     }
-    const user = await userService.findOneRecord({
-        $or: [{ phoneNumber: body.phoneNumber }, { email: body.email }],
-    });
+    const filter = { phoneNumber: body.phoneNumber, accountType: "user" };
+    const user = await userService.findOneRecord(filter);
+    logger.data("User info fetched", user);
     if (!user) {
-        throw new AppError(404, "User does not exist");
+        throw new AppError(404, "Your not a existing user.Register first!");
     }
-    const isPasswordValid = bcrypt.compareSync(body.password, user.password);
-    if (!isPasswordValid) {
-        throw new AppError(401, "Invalid user credentials");
-    }
-    const loggedInUser = await userService.findOneRecord({ _id: user._id });
-    const accessToken = tokenService.signToken(loggedInUser._id, "access");
-    const refreshToken = tokenService.signToken(loggedInUser._id, "refresh");
-    const record = {
-        _id: loggedInUser._id,
-        username: loggedInUser.username,
-        email: loggedInUser.email,
-        fullName: loggedInUser.fullName,
-        accountType: loggedInUser.accountType,
-        accessToken,
-        refreshToken,
+    // if (user.isBlocked) {
+    //     throw new AppError(404, "auth", "A_E016");
+    // }
+    if (body.phoneOTP !== String(user.phoneOTP))
+        throw new AppError(400, "Invalid OTP!");
+
+    const updateOtp = await userService.updateRecord(
+        { _id: user.id },
+        { phoneOTP: null, phoneisVerified: true }
+    );
+    logger.info(updateOtp);
+    const accessToken = tokenService.signToken(user._id, "access");
+    const refreshToken = tokenService.signToken(user._id, "refresh");
+    const userObject = {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        id: user._id,
+        username: user.username,
+        phoneNumber: user.phoneNumber,
+        account: user.accountType,
     };
-    return record;
+    return userObject
 };
 
+// user login otp
+module.exports.refreshOtp = async (body) => {
+    logger.info("Refresh service Starting");
+    const filter = { phoneNumber: body.phoneNumber };
+    const user = await userService.findOneRecord(filter);
+    if (!user) {
+        throw new AppError(404, "Your not a existing user.Register first!");
+    }
+    const record = await userService.updateRecord(
+        { _id: user.id },
+        { phoneOTP: generateOTP() }
+    );
+    await sms.smsOTPV2(record);
+    logger.info(record);
+    record.phoneOTP = undefined;
+    return record;
+};

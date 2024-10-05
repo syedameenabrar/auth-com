@@ -2,18 +2,20 @@ const mongoose = require("mongoose");
 const paginate = require("mongoose-paginate-v2");
 const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 
-const userSchema = new mongoose.Schema(
+const dealerSchema = new mongoose.Schema(
     {
         username: { type: String, required: true, unique: true },
         fullName: { type: String },
-        email: { type: String, unique: true },
+        email: { type: String, required: true, unique: true },
+        emailOtp: { type: Number, },
         phoneNumber: { type: Number, required: true, unique: true },
         phoneOTP: { type: Number, },
         password: { type: String },
         accountType: {
             type: String,
-            default: "user",
+            default: "dealer",
         },
+        isDealer: { type: Boolean, required: true },
         profilePicture: { type: String },
     },
     {
@@ -21,6 +23,7 @@ const userSchema = new mongoose.Schema(
     }
 );
 
-userSchema.plugin(paginate);
-userSchema.plugin(aggregatePaginate);
-module.exports = mongoose.model("users", userSchema);
+dealerSchema.plugin(paginate);
+dealerSchema.plugin(aggregatePaginate);
+
+module.exports = mongoose.model("dealer", dealerSchema);
