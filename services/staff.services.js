@@ -109,9 +109,11 @@ module.exports.refreshOtp = async (body) => {
     if (!staff) {
         throw new AppError(404, "Your not a existing staff.Register first!");
     }
+    const option = { new: true };
     const record = await staffModel.findOneAndUpdate(
         { _id: staff.id },
-        { phoneOTP: generateOTP() }
+        { phoneOTP: generateOTP() },
+        option
     );
     await sms.smsOTPV2(record);
     logger.info(record);

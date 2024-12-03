@@ -109,9 +109,11 @@ module.exports.refreshOtp = async (body) => {
     if (!admin) {
         throw new AppError(404, "Your not a existing admin.Register first!");
     }
+    const option = { new: true };
     const record = await adminModel.findOneAndUpdate(
         { _id: admin.id },
-        { phoneOTP: generateOTP() }
+        { phoneOTP: generateOTP() },
+        option
     );
     await sms.smsOTPV2(record);
     logger.info(record);

@@ -81,7 +81,8 @@ module.exports.dealerLogin = async (body) => {
         // If OTP is valid, mark phone as verified and reset OTP
         await dealerModel.findOneAndUpdate(
             { _id: dealer._id },
-            { phoneOTP: null, }
+            // { phoneOTP: null, },
+           { $unset: { phoneOTP: "" }}
         );
     }
 
@@ -108,10 +109,11 @@ module.exports.refreshOtp = async (body) => {
     const dealer = await dealerModel.findOne(filter);
     if (!dealer) {
         throw new AppError(404, "Your not a existing dealer.Register first!");
-    }
+    }const option = { new: true };
     const record = await dealerModel.findOneAndUpdate(
-        { _id: dealer.id },
-        { phoneOTP: generateOTP() }
+        { _id: dealer._id },
+        { phoneOTP: generateOTP() },
+        option
     );
     await sms.smsOTPV2(record);
     logger.info(record);

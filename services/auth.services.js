@@ -84,11 +84,15 @@ module.exports.refreshOtp = async (body) => {
     if (!user) {
         throw new AppError(404, "Your not a existing user.Register first!");
     }
+    const option = { new: true };
     const record = await userService.updateRecord(
         { _id: user.id },
-        { phoneOTP: generateOTP() }
+        { phoneOTP: generateOTP() },
+        option
     );
+    
     await sms.smsOTPV2(record);
+
     logger.info(record);
     record.phoneOTP = undefined;
     return record;
