@@ -1,6 +1,6 @@
 module.exports = {
     PORT: 4000,
-    DATABASE: "mongodb://0.0.0.0:27017/factoryTest",
+    DATABASE: "mongodb://0.0.0.0:27017/factoryTestDemo",
     JWT_SECRET: "776tyftsdtfsu",
     ACCESS_TOKEN_VALIDITY: "1d",
     REFRESH_SECRET: "767uftde56y9ihji",

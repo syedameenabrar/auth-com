@@ -17,6 +17,10 @@ const staffSchema = new mongoose.Schema(
         },
         isStaff: { type: Boolean, required: true },
         profilePicture: { type: String },
+        collectionName: {
+            type: String,
+            default: "staff",
+        },
     },
     {
         timestamps: true,

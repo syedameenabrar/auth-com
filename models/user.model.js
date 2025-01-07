@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     {
         username: { type: String, required: true, unique: true },
         fullName: { type: String },
-        email: { type: String, unique: true },
+        email: { type: String },
         phoneNumber: { type: Number, required: true, unique: true },
         phoneOTP: { type: Number, },
         password: { type: String },
@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema(
             default: "user",
         },
         profilePicture: { type: String },
+        collectionName: {
+            type: String,
+            default: "user",
+        },
     },
     {
         timestamps: true,

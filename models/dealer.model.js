@@ -17,6 +17,10 @@ const dealerSchema = new mongoose.Schema(
         },
         isDealer: { type: Boolean, required: true },
         profilePicture: { type: String },
+        collectionName: {
+            type: String,
+            default: "dealer",
+        },
     },
     {
         timestamps: true,

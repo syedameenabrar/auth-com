@@ -17,6 +17,10 @@ const adminSchema = new mongoose.Schema(
         },
         isAdmin: { type: Boolean, required: true },
         profilePicture: { type: String },
+        collectionName:  {
+            type: String,
+            default: "admin",
+        }
     },
     {
         timestamps: true,
